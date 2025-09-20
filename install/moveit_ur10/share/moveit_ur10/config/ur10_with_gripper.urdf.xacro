@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur10_with_gripper">
+    <xacro:arg name="initial_positions_file" default="$(find ur_moveit)/config/initial_positions.yaml" />
+    <xacro:arg name="ros2_control_hardware_type" default="mock_components" />
+
+    <!-- Import ur10_with_gripper urdf file -->
+    <xacro:include filename="ur10_with_gripper_sim.urdf" />
+
+    <!-- Import control_xacro -->
+    <xacro:include filename="ur10.ros2_control.xacro" />
+
+    <xacro:ur10_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)" ros2_control_hardware_type="$(arg ros2_control_hardware_type)"/>
+
+</robot>
