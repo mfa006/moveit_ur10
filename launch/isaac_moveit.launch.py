@@ -2,11 +2,14 @@
 
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, TimerAction
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from moveit_configs_utils import MoveItConfigsBuilder
+from launch.actions import IncludeLaunchDescription
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # Command-line arguments
@@ -21,10 +24,26 @@ def generate_launch_description():
         default_value="true",
         description="Use simulation clock if true",
     ) 
+    
+    isaacsim_share = get_package_share_directory('isaacsim')
+    planner_share = get_package_share_directory('moveit_ur10')
+     # IsaacSim launch
+    isaacsim_launch_file = os.path.join(
+        isaacsim_share, 'launch', 'run_isaacsim.launch.py'
+    )
+    usd_path = os.path.join(planner_share, 'sim', 'test.usd') #itobos_env 
 
+    isaacsim_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(isaacsim_launch_file),
+        launch_arguments={
+            'gui': usd_path,
+            'play_sim_on_start': 'true'
+        }.items()
+    )
+    
     # Build MoveIt configuration
     moveit_config = (
-        MoveItConfigsBuilder("ur10_with_gripper", package_name="ur_moveit")
+        MoveItConfigsBuilder("ur10_with_gripper", package_name="moveit_ur10")
         .robot_description(
             file_path="config/ur10_with_gripper_isaac.urdf.xacro",
             mappings={
@@ -75,21 +94,22 @@ def generate_launch_description():
 
     # ROS2 Controllers path
     ros2_controllers_path = PathJoinSubstitution(
-        [FindPackageShare("ur_moveit"), "config", "ros2_controllers.yaml"]
+        [FindPackageShare("moveit_ur10"), "config", "ros2_controllers.yaml"]
     )
     
     # # Generate robot description directly
     # robot_description_content = Command([
     #     "xacro", " ",
-    #     PathJoinSubstitution([FindPackageShare("ur_moveit"), "config", "ur10_with_gripper.urdf.xacro"]),
+    #     PathJoinSubstitution([FindPackageShare("moveit_ur10"), "config", "ur10_with_gripper.urdf.xacro"]),
     #     " initial_positions_file:=",
-    #     PathJoinSubstitution([FindPackageShare("ur_moveit"), "config", "initial_positions.yaml"]),
+    #     PathJoinSubstitution([FindPackageShare("moveit_ur10"), "config", "initial_positions.yaml"]),
     # ])
     
     ros2_control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[
+            moveit_config.robot_description,
             ros2_controllers_path,
             {"use_sim_time": LaunchConfiguration("use_sim_time")},
         ],
@@ -107,24 +127,27 @@ def generate_launch_description():
             "--controller-manager",
             "/controller_manager",
         ],
+        parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}],
     )
 
     arm_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["arm_controller", "-c", "/controller_manager"],
+        parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}],
     )
 
     gripper_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["gripper_controller", "-c", "/controller_manager"],
+        parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}],
     )
 
 
     # RViz
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("ur_moveit"), "config", "moveit.rviz"]
+        [FindPackageShare("moveit_ur10"), "config", "moveit.rviz"]
     )
     
     rviz_node = Node(
@@ -144,16 +167,37 @@ def generate_launch_description():
     )
 
     return LaunchDescription(
-        [
+        [   
+            # Start IsaacSim first - this takes time to initialize
+            isaacsim_launch,
             ros2_control_hardware_type,
             use_sim_time,
+            
+            # Start basic ROS2 nodes immediately (these don't depend on IsaacSim)
             static_tf,
             robot_state_publisher,
-            ros2_control_node,
-            joint_state_broadcaster_spawner,
-            arm_controller_spawner,
-            gripper_controller_spawner,
-            move_group_node,
-            rviz_node,
+            
+            # Wait 15 seconds for IsaacSim to initialize, then start control nodes
+            TimerAction(
+                period=15.0,
+                actions=[
+                    ros2_control_node,
+                    joint_state_broadcaster_spawner,
+                    arm_controller_spawner,
+                    gripper_controller_spawner,
+                ]
+            ),
+            
+            # Wait 20 seconds total before starting MoveIt (needs robot state)
+            TimerAction(
+                period=20.0,
+                actions=[move_group_node]
+            ),
+            
+            # Start RViz last (25 seconds) to ensure everything is ready
+            TimerAction(
+                period=25.0,
+                actions=[rviz_node]
+            ),
         ]
     )
