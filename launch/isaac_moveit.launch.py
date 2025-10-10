@@ -54,7 +54,7 @@ def generate_launch_description():
         )
         .robot_description_semantic(file_path="config/ur10_with_gripper.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
-        .planning_pipelines(pipelines=["ompl", "pilz_industrial_motion_planner"])
+        .planning_pipelines(pipelines=["ompl"], default_planning_pipeline="ompl")
         .to_moveit_configs()
     )
     # MoveIt node
@@ -65,6 +65,9 @@ def generate_launch_description():
         parameters=[
             moveit_config.to_dict(),
             {"use_sim_time": LaunchConfiguration("use_sim_time")},
+            {"publish_robot_description": True},
+            {"publish_robot_description_semantic": True},
+            {"publish_planning_scene": True},
         ],
         arguments=["--ros-args", "--log-level", "info"],
     )
