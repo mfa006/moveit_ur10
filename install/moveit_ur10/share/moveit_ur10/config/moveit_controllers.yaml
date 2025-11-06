@@ -17,5 +17,27 @@ moveit_simple_controller_manager:
       - wrist_1_joint
       - wrist_2_joint
       - wrist_3_joint
-    action_ns: follow_joint_trajectory
+    action_ns: follow_joint_trajectory  # Action server at /arm_controller/follow_joint_trajectory
+
+  gripper_controller:
+    type: GripperCommand
+    default: false
+    action_ns: gripper_action  # Action server namespace for gripper
+
+# Trajectory execution parameters
+trajectory_execution:
+  allowed_execution_duration_scaling: 1.2
+  allowed_goal_duration_margin: 0.5
+  allowed_start_tolerance: 0.1
+  execution_duration_monitoring: true
+  max_safe_path_cost: 1.0
+  # Ensure trajectories have proper time_from_start values
+  wait_for_trajectory_execution: true
+  # Controller-specific settings
+  controller_connection_timeout: 60.0
+  controller_action_timeout: 30.0
+  # Force MoveIt to always compute timestamps for trajectories
+  # This ensures timestamps are set even if optimizer strips them
+  default_velocity_scaling_factor: 0.1
+  default_acceleration_scaling_factor: 0.1
    

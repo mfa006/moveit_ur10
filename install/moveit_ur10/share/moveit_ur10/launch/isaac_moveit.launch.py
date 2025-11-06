@@ -31,7 +31,7 @@ def generate_launch_description():
     isaacsim_launch_file = os.path.join(
         isaacsim_share, 'launch', 'run_isaacsim.launch.py'
     )
-    usd_path = os.path.join(planner_share, 'sim', 'test.usd') #itobos_env 
+    usd_path = os.path.join(planner_share, 'sim', 'new_itobos_env.usd') #itobos_env 
 
     isaacsim_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(isaacsim_launch_file),
@@ -54,7 +54,10 @@ def generate_launch_description():
         )
         .robot_description_semantic(file_path="config/ur10_with_gripper.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
-        .planning_pipelines(pipelines=["ompl"], default_planning_pipeline="ompl")
+        .planning_pipelines(
+            pipelines=["ompl"], 
+            default_planning_pipeline="ompl"
+        )
         .to_moveit_configs()
     )
     # MoveIt node
@@ -65,9 +68,14 @@ def generate_launch_description():
         parameters=[
             moveit_config.to_dict(),
             {"use_sim_time": LaunchConfiguration("use_sim_time")},
-            {"publish_robot_description": True},
-            {"publish_robot_description_semantic": True},
-            {"publish_planning_scene": True},
+            # Ensure trajectories have proper timestamps
+            {"trajectory_execution.allowed_execution_duration_scaling": 1.2},
+            {"trajectory_execution.allowed_goal_duration_margin": 0.5},
+            {"trajectory_execution.allowed_start_tolerance": 0.1},
+            # Disable CHOMP trajectory optimization to prevent timestamp issues
+            {"planning_pipelines.ompl.enable_trajectory_optimization": False},
+            # Ensure trajectory execution manager computes timestamps
+            {"trajectory_execution.execution_duration_monitoring": True},
         ],
         arguments=["--ros-args", "--log-level", "info"],
     )
@@ -182,7 +190,7 @@ def generate_launch_description():
             
             # Wait 15 seconds for IsaacSim to initialize, then start control nodes
             TimerAction(
-                period=15.0,
+                period=5.0,
                 actions=[
                     ros2_control_node,
                     joint_state_broadcaster_spawner,
@@ -193,13 +201,13 @@ def generate_launch_description():
             
             # Wait 20 seconds total before starting MoveIt (needs robot state)
             TimerAction(
-                period=20.0,
+                period=5.0,
                 actions=[move_group_node]
             ),
             
             # Start RViz last (25 seconds) to ensure everything is ready
             TimerAction(
-                period=25.0,
+                period=10.0,
                 actions=[rviz_node]
             ),
         ]

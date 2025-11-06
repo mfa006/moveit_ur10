@@ -183,6 +183,7 @@ To customize the robot configuration:
 2. **Launch Failures**: Check that all required packages are sourced
 3. **Planning Failures**: Verify joint limits and collision objects
 4. **Controller Issues**: Ensure proper hardware interface configuration
+5. **Trajectory Execution Failures**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed solutions
 
 ### Debug Commands
 
@@ -200,6 +201,15 @@ Check MoveIt services:
 ```bash
 ros2 service list | grep move_group
 ```
+
+### Trajectory Execution Issues
+
+If the robot plans successfully but doesn't execute, check:
+- Trajectory timestamps: `ros2 topic echo /arm_controller/follow_joint_trajectory/goal --once`
+- Controller status: `ros2 topic echo /arm_controller/follow_joint_trajectory/feedback`
+- MoveIt parameters: `ros2 param list /move_group | grep -i trajectory`
+
+For detailed troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Dependencies
 

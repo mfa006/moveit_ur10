@@ -9,9 +9,15 @@ from moveit_msgs.msg import BoundingVolume
 from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose, PoseStamped
 from visualization_msgs.msg import Marker
+from moveit_msgs.msg import RobotTrajectory
+
 import math
 import time
 
+import os
+import sys
+sys.path.append(os.path.dirname(__file__))
+from collision_objects import CollisionObjects  # type: ignore
 
 def get_goal_from_user():
     """Get goal position (m) and orientation (rpy in degrees) from user input"""
@@ -57,42 +63,44 @@ class UR10MoveItClient(Node):
         self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
         self.goal_pub = self.create_publisher(PoseStamped, '/goal_pose', 10)
         self.marker_pub = self.create_publisher(Marker, '/goal_marker', 10)
-
+        self.traj_pub = self.create_publisher(RobotTrajectory, '/display_planned_path', 10)
         # Wait for MoveGroup server
         self.get_logger().info("Waiting for MoveGroup action server...")
         self.move_group_client.wait_for_server(timeout_sec=10.0)
         self.get_logger().info("MoveGroup action server available!")
 
-        # Add floor to the planning scene
-        self.add_floor_to_scene()
+        # Collision objects helper
+        self.collision_objects = CollisionObjects(self)
+
+        # Add rectangular floor where the robot base (at world origin) is at the left corner
+        # Choose rectangle dimensions (meters)
+        rect_len_x = 2.0  # length along +X from robot
+        rect_len_y = 1.2  # width along +Y from robot
+        thickness = 0.05
+        center_z = -0.2  # top surface at z=0
+        self.collision_objects.add_floor(
+            size_x=rect_len_x,
+            size_y=rect_len_y,
+            thickness=thickness,
+            frame_id='world',
+            center_z=center_z,
+            object_id='floor',
+            anchor_at_origin_corner=True,
+        )
+        # Add pads at all four corners  
+        self.collision_objects.add_corner_pads(
+            rect_len_x=rect_len_x,
+            rect_len_y=rect_len_y,
+            pad_size_x=0.6,
+            pad_size_y=0.6,
+            thickness=0.5,
+            frame_id='world',
+            top_z=0.0,
+            id_prefix='pad_corner',
+        )
         time.sleep(1.0)
 
-    def add_floor_to_scene(self):
-        """Publish a collision object representing the floor"""
-        self.get_logger().info("Adding floor collision object to the planning scene...")
-
-        floor = CollisionObject()
-        floor.id = "floor"
-        floor.header.frame_id = "world"
-
-        primitive = SolidPrimitive()
-        primitive.type = SolidPrimitive.BOX
-        primitive.dimensions = [2.0, 2.0, 0.05]
-
-        pose = Pose()
-        pose.position.z = -0.025
-        pose.orientation.w = 1.0
-
-        floor.primitives.append(primitive)
-        floor.primitive_poses.append(pose)
-        floor.operation = CollisionObject.ADD
-
-        scene = PlanningScene()
-        scene.is_diff = True
-        scene.world.collision_objects.append(floor)
-
-        self.scene_pub.publish(scene)
-        self.get_logger().info("Floor collision object published to planning scene.")
+    
 
     def move_to_pose(self, pose, group_name="arm"):
         """Move robot to a specific pose using MoveGroup action"""
@@ -149,12 +157,20 @@ class UR10MoveItClient(Node):
         result_future = goal_handle.get_result_async()
         rclpy.spin_until_future_complete(self, result_future)
 
-        result = result_future.result().result
-        if result.error_code.val == result.error_code.SUCCESS:
+        get_result_response = result_future.result()
+        # In ROS 2 actions, get_result() returns a response wrapper with a `.result` field
+        action_result = getattr(get_result_response, 'result', None)
+        if action_result is None:
+            self.get_logger().error("MoveGroup result is empty or invalid.")
+            return False
+
+        if action_result.error_code.val == action_result.error_code.SUCCESS:
+            traj = action_result.planned_trajectory  # RobotTrajectory
+            self.traj_pub.publish(traj)
             self.get_logger().info("Movement completed successfully!")
             return True
         else:
-            self.get_logger().error(f"Movement failed with error code: {result.error_code.val}")
+            self.get_logger().error(f"Movement failed with error code: {action_result.error_code.val}")
             return False
 
     def visualize_goal_pose(self, pose):

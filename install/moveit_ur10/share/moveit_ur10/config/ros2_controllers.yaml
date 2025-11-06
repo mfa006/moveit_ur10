@@ -25,6 +25,14 @@ arm_controller:
     state_interfaces:
       - position
       - velocity
+    # Trajectory controller parameters
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    # Allow trajectories with zero time_from_start (will be handled by interpolation)
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.6
 
 gripper_controller:
   ros__parameters:
