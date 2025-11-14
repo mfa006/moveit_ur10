@@ -76,6 +76,12 @@ def generate_launch_description():
             {"planning_pipelines.ompl.enable_trajectory_optimization": False},
             # Ensure trajectory execution manager computes timestamps
             {"trajectory_execution.execution_duration_monitoring": True},
+            # Fix current state monitor timeout issues
+            # Increase timeout for receiving joint states (default is 1.0s)
+            # {"robot_description_joint_states_source": "topic"},
+            {"joint_state_topic": "/joint_states"},
+            # Increase the timeout for state updates (in seconds)
+            {"state_monitor_rate": 20.0},  # Hz at which to check for state updates
         ],
         arguments=["--ros-args", "--log-level", "info"],
     )
@@ -199,9 +205,10 @@ def generate_launch_description():
                 ]
             ),
             
-            # Wait 20 seconds total before starting MoveIt (needs robot state)
+            # Wait longer before starting MoveIt to ensure joint states are being published
+            # Increased delay to allow joint_state_broadcaster to start publishing
             TimerAction(
-                period=5.0,
+                period=10.0,
                 actions=[move_group_node]
             ),
             
