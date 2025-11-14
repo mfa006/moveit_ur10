@@ -11,6 +11,7 @@ Panels:
         - /TF1/Frames1
         - /Marker1
         - /Axes1
+        - /Marker2
       Splitter Ratio: 0.5
     Tree Height: 160
   - Class: rviz_common/Help
@@ -297,6 +298,19 @@ Visualization Manager:
       Radius: 0.05999999865889549
       Reference Frame: world
       Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /body_mesh_marker
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -322,18 +336,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.239020437002182
-        Y: -0.21348394453525543
-        Z: 0.03337394446134567
+        X: 0.7853090167045593
+        Y: 0.013862069696187973
+        Z: 0.25937339663505554
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4897969961166382
+      Pitch: 0.7047955393791199
       Target Frame: world
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.03198268637061119
+      Yaw: 0.3519626557826996
     Saved: ~
 Window Geometry:
   Displays:

@@ -209,7 +209,7 @@ def generate_launch_description():
             
             # Wait 15 seconds for IsaacSim to initialize, then start control nodes
             TimerAction(
-                period=10.0,
+                period=15.0,
                 actions=[
                     ros2_control_node,
                     joint_state_broadcaster_spawner,
@@ -221,13 +221,13 @@ def generate_launch_description():
             # Wait longer before starting MoveIt to ensure joint states are being published
             # Increased delay to allow joint_state_broadcaster to start publishing
             TimerAction(
-                period=10.0,
+                period=25.0,
                 actions=[move_group_node]
             ),
             
             # Start RViz last (25 seconds) to ensure everything is ready
             TimerAction(
-                period=10.0,
+                period=30.0,
                 actions=[rviz_node]
             ),
         ]

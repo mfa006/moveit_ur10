@@ -1,14 +1,35 @@
 #!/usr/bin/env python3
+import math
 import time
+from pathlib import Path 
 import rclpy
 from rclpy.node import Node
 
-from moveit_msgs.msg import PlanningScene, CollisionObject, BoundingVolume
-from shape_msgs.msg import SolidPrimitive
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Point, Pose
+from moveit_msgs.msg import PlanningScene, CollisionObject
+from shape_msgs.msg import Mesh, MeshTriangle, SolidPrimitive
+import trimesh
+
+
+def quaternion_from_euler(roll: float, pitch: float, yaw: float):
+    """Return quaternion as (x, y, z, w) from Euler angles."""
+    cr = math.cos(roll * 0.5)
+    sr = math.sin(roll * 0.5)
+    cp = math.cos(pitch * 0.5)
+    sp = math.sin(pitch * 0.5)
+    cy = math.cos(yaw * 0.5)
+    sy = math.sin(yaw * 0.5)
+
+    qw = cr * cp * cy + sr * sp * sy
+    qx = sr * cp * cy - cr * sp * sy
+    qy = cr * sp * cy + sr * cp * sy
+    qz = cr * cp * sy - sr * sp * cy
+    return qx, qy, qz, qw
 
 
 class CollisionObjects:
+    DEFAULT_BODY_MESH_PATH = "/home/muhammad/IsaacSim-ros_workspaces/humble_ws/src/moveit_ur10/resource/body_map_filt.ply"
+
     def __init__(self, node: Node):
         self._node = node
         self._scene_pub = node.create_publisher(PlanningScene, '/planning_scene', 10)
@@ -127,6 +148,65 @@ class CollisionObjects:
                 object_id=oid,
             )
 
+    def publish_body_mesh(self,
+                          roll: float = 0.0,
+                          pitch: float = 0.0,
+                          yaw: float = 0.0,
+                          mesh_path: str = None,
+                          frame_id: str = 'world',
+                          object_id: str = 'body_mesh',
+                          position_x: float = 0.0,
+                          position_y: float = 0.0,
+                          position_z: float = 0.0) -> None:
+        mesh_path = mesh_path or self.DEFAULT_BODY_MESH_PATH
+        mesh_file = Path(mesh_path)
+        if not mesh_file.exists():
+            self._node.get_logger().error(f"Mesh file '{mesh_path}' does not exist. Skipping body mesh publication.")
+            return
+
+        self._node.get_logger().info(
+            f"Publishing body mesh collision object '{object_id}' using mesh '{mesh_path}' "
+            f"in frame '{frame_id}' at ({position_x}, {position_y}, {position_z}) "
+            f"with roll={roll}, pitch={pitch}, yaw={yaw}."
+        )
+
+        tm = trimesh.load(mesh_path)
+
+        mesh_msg = Mesh()
+        for face in tm.faces:
+            tri = MeshTriangle()
+            tri.vertex_indices = [int(i) for i in face]
+            mesh_msg.triangles.append(tri)
+
+        for vertex in tm.vertices:
+            pt = Point()
+            pt.x, pt.y, pt.z = (float(v) for v in vertex)
+            mesh_msg.vertices.append(pt)
+
+        col_obj = CollisionObject()
+        col_obj.header.frame_id = frame_id
+        col_obj.id = object_id
+        col_obj.meshes.append(mesh_msg)
+
+        pose = Pose()
+        pose.position.x = position_x
+        pose.position.y = position_y
+        pose.position.z = position_z
+        qx, qy, qz, qw = quaternion_from_euler(roll, pitch, yaw)
+        pose.orientation.x = qx
+        pose.orientation.y = qy
+        pose.orientation.z = qz
+        pose.orientation.w = qw
+        col_obj.mesh_poses.append(pose)
+        col_obj.operation = CollisionObject.ADD
+
+        scene = PlanningScene()
+        scene.is_diff = True
+        scene.world.collision_objects.append(col_obj)
+
+        self._scene_pub.publish(scene)
+        self._node.get_logger().info("Body mesh collision object published to planning scene.")
+
 
 if __name__ == "__main__":
     rclpy.init()
@@ -157,6 +237,7 @@ if __name__ == "__main__":
         id_prefix='pad_corner',
         floor_centered=True,
     )
+    collision_objects.publish_body_mesh(roll=0, pitch=3.14, yaw= -1.57, position_x=-1.0, position_y=-0.5, position_z=0.0)
     time.sleep(1.0)
 
     rclpy.spin(node)
