@@ -87,14 +87,27 @@ def generate_launch_description():
     )
 
     # Static TF
+    # static_tf = Node(
+    #     package="tf2_ros",
+    #     executable="static_transform_publisher",
+    #     name="static_transform_publisher",
+    #     output="log",
+    #     arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base_link"],
+    #     parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}],
+    # )
+
     static_tf = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="static_transform_publisher",
-        output="log",
-        arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base_link"],
-        parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}],
-    )
+    package="tf2_ros",
+    executable="static_transform_publisher",
+    name="static_transform_publisher",
+    output="log",
+    arguments=[
+        "-1.0", "-0.5", "0.0",   # translation xyz
+        "0.0", "0.0", "0.0",     # rotation rpy
+        "world", "base_link"     # parent, child
+    ],
+    parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}],
+)
 
 
     # Publish TF
@@ -196,7 +209,7 @@ def generate_launch_description():
             
             # Wait 15 seconds for IsaacSim to initialize, then start control nodes
             TimerAction(
-                period=5.0,
+                period=10.0,
                 actions=[
                     ros2_control_node,
                     joint_state_broadcaster_spawner,

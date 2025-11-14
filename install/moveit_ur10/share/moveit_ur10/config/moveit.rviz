@@ -10,6 +10,7 @@ Panels:
         - /TF1
         - /TF1/Frames1
         - /Marker1
+        - /Axes1
       Splitter Ratio: 0.5
     Tree Height: 160
   - Class: rviz_common/Help
@@ -108,10 +109,6 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          world:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
           wrist_1_link:
             Alpha: 1
             Show Axes: false
@@ -210,10 +207,6 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          world:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
           wrist_1_link:
             Alpha: 1
             Show Axes: false
@@ -240,7 +233,7 @@ Visualization Manager:
       Frames:
         All Enabled: false
         base_link:
-          Value: false
+          Value: true
         base_link_inertia:
           Value: false
         flange:
@@ -297,6 +290,13 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /goal_marker
       Value: true
+    - Class: rviz_default_plugins/Axes
+      Enabled: true
+      Length: 0.5
+      Name: Axes
+      Radius: 0.05999999865889549
+      Reference Frame: world
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -315,25 +315,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 3.6704859733581543
+      Distance: 3.5745279788970947
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.1018933057785034
-        Y: 0.3644965887069702
-        Z: 0.3308447599411011
+        X: 0.239020437002182
+        Y: -0.21348394453525543
+        Z: 0.03337394446134567
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3899996876716614
+      Pitch: 0.4897969961166382
       Target Frame: world
       Value: Orbit (rviz_default_plugins)
-      Yaw: 5.65516996383667
+      Yaw: 0.03198268637061119
     Saved: ~
 Window Geometry:
   Displays:

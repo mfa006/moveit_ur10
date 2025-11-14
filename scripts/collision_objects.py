@@ -95,13 +95,26 @@ class CollisionObjects:
                         thickness: float = 0.05,
                         frame_id: str = 'world',
                         top_z: float = 0.0,
-                        id_prefix: str = 'pad_corner') -> None:
-        corners = [
-            (0.0, 0.0, f"{id_prefix}_00"),
-            (rect_len_x, 0.0, f"{id_prefix}_x0"),
-            (0.0, rect_len_y, f"{id_prefix}_0y"),
-            (rect_len_x, rect_len_y, f"{id_prefix}_xy"),
-        ]
+                        id_prefix: str = 'pad_corner',
+                        floor_centered: bool = False) -> None:
+        if floor_centered:
+            # Floor is centered at origin, so corners are at ±half dimensions
+            half_x = rect_len_x * 0.5
+            half_y = rect_len_y * 0.5
+            corners = [
+                (-half_x, -half_y, f"{id_prefix}_00"),
+                (half_x, -half_y, f"{id_prefix}_x0"),
+                (-half_x, half_y, f"{id_prefix}_0y"),
+                (half_x, half_y, f"{id_prefix}_xy"),
+            ]
+        else:
+            # Floor is anchored at origin corner
+            corners = [
+                (0.0, 0.0, f"{id_prefix}_00"),
+                (rect_len_x, 0.0, f"{id_prefix}_x0"),
+                (0.0, rect_len_y, f"{id_prefix}_0y"),
+                (rect_len_x, rect_len_y, f"{id_prefix}_xy"),
+            ]
         for cx, cy, oid in corners:
             self.add_pad(
                 center_x=cx,
@@ -122,7 +135,7 @@ if __name__ == "__main__":
     rect_len_x = 2.0  # length along +X from robot
     rect_len_y = 1.2  # width along +Y from robot
     thickness = 0.05
-    center_z = -0.2  # top surface at z=0
+    center_z = 0.0  # top surface at z=0
     collision_objects.add_floor(
         size_x=rect_len_x,
         size_y=rect_len_y,
@@ -130,7 +143,7 @@ if __name__ == "__main__":
         frame_id='world',
         center_z=center_z,
         object_id='floor',
-        anchor_at_origin_corner=True,
+        anchor_at_origin_corner=False,
     )
     # Add pads at all four corners  
     collision_objects.add_corner_pads(
@@ -142,6 +155,7 @@ if __name__ == "__main__":
         frame_id='world',
         top_z=0.0,
         id_prefix='pad_corner',
+        floor_centered=True,
     )
     time.sleep(1.0)
 

@@ -4,7 +4,7 @@
     <xacro:arg name="ros2_control_hardware_type" default="isaac" />
 
     <!-- Create world link -->
-    <link name="world"/>
+    <!-- <link name="world"/> -->
     
     <!-- links -  main serial chain -->
     <link name="base_link"/>
@@ -143,12 +143,12 @@
     </link>
     
     <!-- base_joint fixes base_link to the environment -->
-    <joint name="base_joint" type="fixed">
+    <!-- <joint name="base_joint" type="fixed">
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <parent link="world"/>
         <child link="base_link"/>
     </joint>
-    
+     -->
     <!-- joints - main serial chain -->
     <joint name="base_link-base_link_inertia" type="fixed">
         <parent link="base_link"/>
