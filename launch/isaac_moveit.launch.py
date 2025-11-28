@@ -221,13 +221,13 @@ def generate_launch_description():
             # Wait longer before starting MoveIt to ensure joint states are being published
             # Increased delay to allow joint_state_broadcaster to start publishing
             TimerAction(
-                period=25.0,
+                period=5.0,
                 actions=[move_group_node]
             ),
             
             # Start RViz last (25 seconds) to ensure everything is ready
             TimerAction(
-                period=30.0,
+                period=5.0,
                 actions=[rviz_node]
             ),
         ]

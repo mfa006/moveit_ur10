@@ -220,12 +220,12 @@
         <child link="tool0"/>
     </joint>
     
-    <!-- Base link of the gripper -->
+    <!-- Base link of the gripper with a cylinder geometry -> length of custom gripper -->
     <link name="gripper_base">
         <visual>
-            <origin rpy="0 0 0" xyz="0 0 0.05"/>
+            <origin rpy="0 0 0" xyz="0 0 0.0"/>
             <geometry>
-                <cylinder length="0.1" radius="0.03"/>
+                <cylinder length="0.2" radius="0.03"/> 
             </geometry>
             <material name="grey">
                 <color rgba="0.6 0.6 0.6 1"/>
@@ -244,6 +244,19 @@
         <parent link="tool0"/>
         <child link="gripper_base"/>
         <origin rpy="0 0 0" xyz="0 0 0"/>
+    </joint>
+
+    <!-- Virtual tip frame for MoveIt interactive marker -->
+    <link name="moveit_eef">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+        </visual>
+    </link>
+    <!-- offset of planning frame from gripper base -->
+    <joint name="moveit_eef_joint" type="fixed">
+        <parent link="gripper_base"/>
+        <child link="moveit_eef"/>
+        <origin rpy="0 0 0" xyz="0 0 0.1"/>
     </joint>
 
     <!-- Import control_xacro for Isaac -->

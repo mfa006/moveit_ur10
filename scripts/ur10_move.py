@@ -63,6 +63,10 @@ class UR10MoveItClient(Node):
 
         # Add floor to the planning scene
         self.add_floor_to_scene()
+
+        print(self.move_group_client.get_ee_frame())
+        print(self.move_group_client.get_ee_link())
+        print(self.move_group_client.get_ee_link_name())
         time.sleep(1.0)
 
     def add_floor_to_scene(self):
@@ -129,7 +133,7 @@ class UR10MoveItClient(Node):
         # constraints.position_constraints = [pos_constraint]
         # constraints.orientation_constraints = [orient_constraint]
         # goal_msg.request.goal_constraints = [constraints]
-        
+        #print EE frame
         # Send goal
         self.get_logger().info(f"Sending goal to MoveGroup for group '{group_name}'...")
         future = self.move_group_client.send_goal_async(goal_msg)
