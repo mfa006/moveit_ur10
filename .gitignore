@@ -9,7 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
-install/*
+install/
 log/
 share/
 doc/
