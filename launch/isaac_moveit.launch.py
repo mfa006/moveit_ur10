@@ -32,13 +32,14 @@ def generate_launch_description():
         isaacsim_share, 'launch', 'run_isaacsim.launch.py'
     )
     usd_path = os.path.join(planner_share, 'sim', 'new_itobos_env.usd') #itobos_env 
+    usd_path = os.path.abspath(usd_path)
 
     isaacsim_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(isaacsim_launch_file),
-        launch_arguments={
-            'gui': usd_path,
+        launch_arguments=list({
+            'gui': str(usd_path),  # Ensure it's a string
             'play_sim_on_start': 'true'
-        }.items()
+        }.items())
     )
     
     # Build MoveIt configuration
@@ -209,7 +210,7 @@ def generate_launch_description():
             
             # Wait 15 seconds for IsaacSim to initialize, then start control nodes
             TimerAction(
-                period=15.0,
+                period=5.0,
                 actions=[
                     ros2_control_node,
                     joint_state_broadcaster_spawner,
